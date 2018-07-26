@@ -1,0 +1,6 @@
+/.gitattributes
+/app.publish/
+/features/
+/nasaTestSuite/
+/stepDefinitions/
+/testRunners/
