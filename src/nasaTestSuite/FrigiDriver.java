@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import io.appium.java_client.MobileBy;
 import io.appium.java_client.MobileElement;
@@ -15,6 +17,9 @@ import nasaTestSuite.TestCapabilities;
 import io.appium.java_client.MobileElement;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
+
+import static org.junit.Assert.fail;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.String;
@@ -30,16 +35,20 @@ import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import javax.swing.JOptionPane;
+import javax.xml.xpath.XPathConstants;
+
 import io.appium.java_client.android.AndroidDriver;
 
 public class FrigiDriver {
 
 	private URL testServerAddress; 
 	private static AndroidDriver driver; //David: why is this static?
-	boolean boolAppStart = false;
-	boolean boolAppUpdated = false;
+	private boolean boolAppStart = false;
+	private boolean boolAppUpdated = false;
 	
-	public void StartApp(int implicitTime) {
+	public Dehum dhum;
+
+	public void startApp(int implicitTime) {
 		TestCapabilities testCap = new TestCapabilities();
 		testCap.AssignAppiumCapabilities();
 		try 
@@ -65,8 +74,44 @@ public class FrigiDriver {
 		
 		driver.manage().timeouts().implicitlyWait(implicitTime, TimeUnit.SECONDS);
 		boolAppStart = true;
+		
+		//TODO add logic for list of appliances based on configurations
+		this.dhum = new Dehum(driver, implicitTime);
 	}
+//	
+//	public FrigiDriver(int implicitTime) {
+//		TestCapabilities testCap = new TestCapabilities();
+//		testCap.AssignAppiumCapabilities();
+//		try 
+//		{
+//			testServerAddress = new URL("http://localhost:4723/wd/hub");
+//		}
+//		catch(Exception e)
+//		{
+//			e.printStackTrace();
+//			System.out.println("StepDef StartApp() CAUGHT: Failed to load URL");
+//		}
+//		DesiredCapabilities appiumSettings = testCap.AssignAppiumCapabilities();
+//		try 
+//		{
+//			driver = new AndroidDriver<MobileElement>(testServerAddress, appiumSettings);
+//		}
+//		catch(Exception e)
+//		{
+//			e.printStackTrace();
+//			driver.quit();
+//			System.out.println("StepDef StartApp() CAUGHT: Failed to initialize AndroidDriver driver");
+//		}
+//		
+//		driver.manage().timeouts().implicitlyWait(implicitTime, TimeUnit.SECONDS);
+//		boolAppStart = true;
+//		
+//		//TODO add logic for list of appliances based on configurations
+//		this.dhum = new Dehum(driver, implicitTime);
+//	}
 	
+	
+
 	public void UpdateApp() {
 		Boolean looping = true;
 		while(looping) { //David: removed wait time
@@ -85,7 +130,7 @@ public class FrigiDriver {
 		try {
 			boolean looping = true;
 			while(looping) {
-				MobileElement result = GrabFromClass("android.widget.Button",0, driver);
+				MobileElement result = grabFromClass("android.widget.Button",0, driver);
 				result.click();
 				looping = false;
 			}
@@ -97,12 +142,16 @@ public class FrigiDriver {
 	public void typeSignIn() {//David
 		WebElement emailField = null;
 		WebElement passField = null;
+
+		WebDriverWait wait = new WebDriverWait(driver,20);
+		wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(MyXPath.emailField)));
+		wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(MyXPath.passField)));
 		
-		boolean looping = true;
+//		boolean looping = true;
 //		while(looping) {
 //			try {
-				emailField = FindByID("email", true, driver);
-				passField = FindByID("password", true, driver);
+//				emailField = FindByID("email", true, driver);
+//				passField = FindByID("password", true, driver);
 //				looping = false;
 //				System.out.println("ID SUCCESS!!! :D");
 //			}catch(Exception e){
@@ -114,8 +163,8 @@ public class FrigiDriver {
 		if(emailField == null || passField == null)
 		{
 			List<MobileElement> editableFields = driver.findElementsByClassName("android.widget.EditText");
-			Print("Result size " + editableFields.size());
-			editableFields.get(0).sendKeys("eluxtester@gmail.com");
+			print("Result size " + editableFields.size());
+			editableFields.get(0).sendKeys("eluxtester1@gmail.com");
 			editableFields.get(0).click();
 			editableFields.get(1).click();
 			editableFields.get(1).sendKeys("123456");
@@ -130,18 +179,16 @@ public class FrigiDriver {
 	}
 	
 	public void clickSignIn2() {
-		boolean looping = true;
 		WebElement signInButton = null;
 		try {
-			signInButton = FindByID("sign-in--button", false, driver);
+			WebDriverWait wait = new WebDriverWait(driver,20);
+			wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(MyXPath.signInTwo)));
+			signInButton = findByXPath(MyXPath.signInTwo, false, driver);
 			signInButton.click();
-			looping = false;
 		}catch(Exception e) {
 			System.out.println("Looking for signin2");
 		}
 	}
-	
-	//STEPDEF_RACFANSPEED
 	
 	public String checkScreen() {
 		//NO APPLIANCES: add-appliance (ID)
@@ -176,7 +223,7 @@ public class FrigiDriver {
 		return null;//shouldn't get here. 
 	}
 	//srt: JIHAD'S HELPER METHODS
-	private MobileElement GrabFromClass(String className,int index, AndroidDriver d)
+	private MobileElement grabFromClass(String className,int index, AndroidDriver d)
 	{
 		List<MobileElement> results = null;
 		boolean looping = true;
@@ -185,17 +232,25 @@ public class FrigiDriver {
 				results = d.findElementsByClassName(className);
 				if(results.size()>0) {
 
-					Print("Size of " + className + " Elements: " + results.size());
+					print("Size of " + className + " Elements: " + results.size());
 					looping = false;
 				}
 			}catch(NullPointerException e) {
-				Print("Looking for button by class: " + className);
+				print("Looking for button by class: " + className);
 				//loops forever if button isn't there
 			}
 		}
 		return results.get(index);
 	}
-	private WebElement FindByID(String id, boolean looping, AndroidDriver d)
+	
+	public void clickByXpath(String xPath, int waitSecs){
+		WebDriverWait wait = new WebDriverWait(driver, waitSecs);
+		wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xPath)));
+		WebElement humidPlusElm = findByXPath(xPath, false, driver);
+		humidPlusElm.click();
+	}
+	
+	public WebElement findByID(String id, boolean looping, AndroidDriver d)
 	{
 		WebElement result = null;
 		if(looping == true) {
@@ -206,7 +261,7 @@ public class FrigiDriver {
 				}
 				catch(Exception e)
 				{
-					Print("Failed to find Element with ID:" + id);
+					print("Failed to find Element with ID:" + id);
 				}
 			}
 		}else {
@@ -216,13 +271,46 @@ public class FrigiDriver {
 			}
 			catch(Exception e)
 			{
-				Print("Failed to find Element with ID:" + id);
+				print("Failed to find Element with ID:" + id);
 			}
 		}
 		return result;
 		
 	}
-	private void SwitchWifi(String ssid)
+	
+	public WebElement findByXPath(String xpath, boolean looping, AndroidDriver d)
+	{
+		WebElement result = null;
+		if(looping == true) {
+			while(looping) {
+				try
+				{
+					result = d.findElementById(xpath);
+				}
+				catch(Exception e)
+				{
+					print("Failed to find Element with ID:" + xpath);
+				}
+			}
+		}else {
+			try
+			{
+				result = d.findElementByXPath(xpath);
+			}
+			catch(Exception e)
+			{
+				print("Failed to find Element with ID:" + xpath);
+			}
+		}
+		return result;
+		
+	}
+	
+	public String getText(WebElement element) {
+		return element.getText();
+	}
+	
+	private void switchWifi(String ssid)
 	{
 		String filePath = new File("").getAbsolutePath();
 		filePath = filePath.concat("\\nasaTestSuite\\");
@@ -253,10 +341,21 @@ public class FrigiDriver {
 			e.printStackTrace();
 		}
 	}
-	private void Print(String msg)
+	private void print(String msg)
 	{
 		System.out.println(msg);
 	}
 	//end: JIHAD'S HELPER METHODS
-	
+	public boolean isBoolAppStart() {
+		return boolAppStart;
+	}
+	public void setBoolAppStart(boolean boolAppStart) {
+		this.boolAppStart = boolAppStart;
+	}
+	public boolean isBoolAppUpdated() {
+		return boolAppUpdated;
+	}
+	public void setBoolAppUpdated(boolean boolAppUpdated) {
+		this.boolAppUpdated = boolAppUpdated;
+	}
 }

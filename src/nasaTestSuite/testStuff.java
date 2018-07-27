@@ -15,11 +15,9 @@ import io.appium.java_client.remote.AndroidMobileCapabilityType;
 public class testStuff {
 	public static void main(String[] args) {
 
-		try {
-			divideByZero();
-		}catch (Exception e) {
-			System.out.println("1");
-		}
+//		FrigiDriver frigi = new FrigiDriver(20);
+//		frigi.UpdateApp();
+//		frigi.clickSignIn1();
 	}
 	
 	private static void divideByZero() {
@@ -29,7 +27,7 @@ public class testStuff {
 			System.out.println("2");
 		}
 	}
-	private static void idk() {
+	private static void test1() {
 		URL testServerAddress=null; 
 		AndroidDriver driver= null; 
 		boolean boolAppStart = false;

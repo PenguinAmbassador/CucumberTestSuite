@@ -7,7 +7,7 @@ import cucumber.api.java.en.When;
 import nasaTestSuite.FrigiDriver;
 
 public class StepDef_RACFanSpeed {
-	FrigiDriver frigi = new FrigiDriver();
+	//FrigiDriver frigi = new FrigiDriver();
 	
 	@Given("^App is updatedB$")
 	public void app_is_updated() throws Exception {
